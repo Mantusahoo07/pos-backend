@@ -7,9 +7,13 @@ const cors = require("cors");
 const app = express();
 
 // Middlewares
+// app.js - update the CORS configuration
 app.use(cors({
     credentials: true,
-    origin: ['http://localhost:5173', 'https://point-of-sale-pi-eight.vercel.app'] // Add your frontend URL
+    origin: [
+        'http://localhost:5173',  // Local development
+        'https://point-of-sale-pi-eight.vercel.app'  // Your Vercel frontend
+    ]
 }));
 app.use(express.json());
 app.use(cookieParser());
