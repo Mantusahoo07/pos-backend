@@ -46,6 +46,48 @@ const verifyPayment = async (req, res, next) => {
   }
 };
 
+// Add this function to get all payments
+const getPayments = async (req, res, next) => {
+    try {
+        const payments = await Payment.find().sort({ createdAt: -1 });
+        res.status(200).json({ 
+            success: true, 
+            data: payments 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Add this function to get payment by ID
+const getPaymentById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const payment = await Payment.findById(id);
+        
+        if (!payment) {
+            const error = createHttpError(404, "Payment not found!");
+            return next(error);
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: payment 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Don't forget to export them
+module.exports = { 
+    createOrder, 
+    verifyPayment, 
+    webHookVerification,
+    getPayments,      // Add this
+    getPaymentById    // Add this
+};
+
 const webHookVerification = async (req, res, next) => {
   try {
     const secret = config.razorpyWebhookSecret;
