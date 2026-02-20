@@ -6,6 +6,8 @@ const { createOrder, verifyPayment, webHookVerification } = require("../controll
 router.route("/create-order").post(isVerifiedUser , createOrder);
 router.route("/verify-payment").post(isVerifiedUser , verifyPayment);
 router.route("/webhook-verification").post(webHookVerification);
+router.route("/").get(isVerifiedUser, getPayments);
+router.route("/:id").get(isVerifiedUser, getPaymentById);
 
 
 module.exports = router;
