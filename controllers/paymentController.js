@@ -2,6 +2,7 @@ const Razorpay = require("razorpay");
 const config = require("../config/config");
 const crypto = require("crypto");
 const Payment = require("../models/paymentModel");
+const createHttpError = require("http-errors");
 
 const createOrder = async (req, res, next) => {
   const razorpay = new Razorpay({
@@ -46,48 +47,6 @@ const verifyPayment = async (req, res, next) => {
   }
 };
 
-// Add this function to get all payments
-const getPayments = async (req, res, next) => {
-    try {
-        const payments = await Payment.find().sort({ createdAt: -1 });
-        res.status(200).json({ 
-            success: true, 
-            data: payments 
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Add this function to get payment by ID
-const getPaymentById = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const payment = await Payment.findById(id);
-        
-        if (!payment) {
-            const error = createHttpError(404, "Payment not found!");
-            return next(error);
-        }
-
-        res.status(200).json({ 
-            success: true, 
-            data: payment 
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Don't forget to export them
-module.exports = { 
-    createOrder, 
-    verifyPayment, 
-    webHookVerification,
-    getPayments,      // Add this
-    getPaymentById    // Add this
-};
-
 const webHookVerification = async (req, res, next) => {
   try {
     const secret = config.razorpyWebhookSecret;
@@ -120,7 +79,7 @@ const webHookVerification = async (req, res, next) => {
           email: payment.email,
           contact: payment.contact,
           createdAt: new Date(payment.created_at * 1000) 
-        })
+        });
 
         await newPayment.save();
       }
@@ -135,4 +94,72 @@ const webHookVerification = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, webHookVerification };
+// ✅ NEW: Get all payments
+const getPayments = async (req, res, next) => {
+  try {
+    const payments = await Payment.find().sort({ createdAt: -1 });
+    res.status(200).json({ 
+      success: true, 
+      data: payments 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ✅ NEW: Get payment by ID
+const getPaymentById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const payment = await Payment.findById(id);
+    
+    if (!payment) {
+      const error = createHttpError(404, "Payment not found!");
+      return next(error);
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: payment 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ✅ NEW: Get payment statistics
+const getPaymentStats = async (req, res, next) => {
+  try {
+    const totalPayments = await Payment.countDocuments();
+    const successfulPayments = await Payment.countDocuments({ status: "captured" });
+    const failedPayments = await Payment.countDocuments({ status: "failed" });
+    const pendingPayments = await Payment.countDocuments({ status: "created" });
+    
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: "captured" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        total: totalPayments,
+        successful: successfulPayments,
+        failed: failedPayments,
+        pending: pendingPayments,
+        revenue: totalRevenue[0]?.total || 0
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { 
+  createOrder, 
+  verifyPayment, 
+  webHookVerification,
+  getPayments,      // Add this
+  getPaymentById,   // Add this
+  getPaymentStats   // Add this
+};
