@@ -44,14 +44,13 @@ const getMenuItemCount = async (req, res, next) => {
 // Add new menu item
 const addMenuItem = async (req, res, next) => {
     try {
-        const { name, price, category, description, image, preparationTime } = req.body;
+        const { name, price, category, description, preparationTime } = req.body;
 
         const menuItem = new MenuItem({
             name,
             price,
             category,
             description,
-            image,
             preparationTime
         });
 
