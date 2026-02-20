@@ -11,12 +11,9 @@ const {
     toggleAvailability
 } = require("../controllers/menuItemController");
 
-// Public routes
 router.route("/").get(getMenuItems);
 router.route("/count").get(getMenuItemCount);
 router.route("/category/:categoryId").get(getMenuItemsByCategory);
-
-// Protected routes
 router.route("/").post(isVerifiedUser, addMenuItem);
 router.route("/:id").put(isVerifiedUser, updateMenuItem);
 router.route("/:id").delete(isVerifiedUser, deleteMenuItem);
